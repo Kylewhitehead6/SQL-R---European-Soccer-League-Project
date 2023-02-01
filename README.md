@@ -1,6 +1,6 @@
 # SQL-R---European-Soccer-League-Project
 
-To see results without the code, please select the markdown_md.md file as this is a markdown file compatible with github to show results. Otherwise, code will have to be cloned to your verisons of R and run to get the results in a nice HTML format. 
+To see results without the code, please select the markdown_md.md file as this is a markdown file compatible with github to show results. It does not show some of the tables in the format as it would on an HTML output, but it gives the tables nevertheless. Otherwise, code will have to be cloned to your versions of R and run to get the results in a nice HTML format. 
 
 This project is meant to analyze soccer data in Europes Top 5 European League from the 09/10 season to the 18/19 season. The idea is touch on the competitiveness of each league. What does competitive actually mean? 
 
