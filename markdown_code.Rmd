@@ -1,0 +1,746 @@
+---
+title: "Analyzing Europes Top 5 European Soccer Leagues: 09/10 - 18/19"
+output: html_document
+date: "2023-02-01"
+---
+This document is meant to analyze soccer data in Europes Top 5 European League from the 09/10 season to the 18/19 season. The idea is touch on the competitiveness of each league. What does competitive actually mean? 
+
+Competitiveness is a vague term - we will look at winners, top 4 contenders and points earned from the bottom teams from the top teams to compare whether one league really shines or dulls compared to the others. 
+
+This analysis is conducted using a combination of R programming & SQL. Please view the code file if you want a more in-depth look at my code. This markdown file will only present final outputs such as tables & graphs.  
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#read in files
+#Packages
+library(lubridate)
+library(tidyverse)
+library(dplyr)
+library(sqldf)
+
+#Read in Data + Clean Data
+prem0910 = read.csv("input/Premier League/prem0910.csv")
+prem1011 = read.csv("input/Premier League/prem1011.csv")
+prem1112 = read.csv("input/Premier League/prem1112.csv")
+prem1213 = read.csv("input/Premier League/prem1213.csv")
+prem1314 = read.csv("input/Premier League/prem1314.csv")
+prem1415 = read.csv("input/Premier League/prem1415.csv")
+prem1516 = read.csv("input/Premier League/prem1516.csv")
+prem1617 = read.csv("input/Premier League/prem1617.csv")
+prem1718 = read.csv("input/Premier League/prem1718.csv")
+prem1819 = read.csv("input/Premier League/prem1819.csv")
+
+#View(prem0910) #YYYY/MM/DD
+#View(prem1415) #DD/MM/yy
+#View(prem1819) #DD/MM/YYYY
+
+#CONDENSE DATAFRAMES TO SPECIFIC COLUMNS
+prem0910 = prem0910[,c(1:23)]
+prem1011 = prem1011[,c(1:23)]
+prem1112 = prem1112[,c(1:23)]
+prem1213 = prem1213[,c(1:23)]
+prem1314 = prem1314[,c(1:23)]
+prem1415 = prem1415[,c(1:23)]
+prem1516 = prem1516[,c(1:23)]
+prem1617 = prem1617[,c(1:23)]
+prem1718 = prem1718[,c(1:23)]
+prem1819 = prem1819[,c(1:23)]
+
+#MERGE ALL SEASON DATA TOGETHER
+premalldata = do.call("rbind", list(prem0910, prem1011, prem1112, prem1213, prem1314, prem1415,
+                                    prem1516, prem1617, prem1718, prem1819))
+#View(premalldata)
+
+#FIX DATE
+
+premalldata$Date = parse_date_time(premalldata$Date,orders = c("dmy","ymd"))
+
+#ADD SEASON
+premalldata$season[1:380] = "09/10"
+premalldata$season[381:760] = "10/11"
+premalldata$season[761:1140] = "11/12"
+premalldata$season[1141:1520] = "12/13"
+premalldata$season[1521:1900] = "13/14"
+premalldata$season[1901:2280] = "14/15"
+premalldata$season[2281:2660] = "15/16"
+premalldata$season[2661:3040] = "16/17"
+premalldata$season[3041:3420] = "17/18"
+premalldata$season[3421:3800] = "18/19"
+
+#ADD POINTS
+premalldata$HomeTeamPoints = ifelse(premalldata$FTHG > premalldata$FTAG, 3,
+                                    ifelse(premalldata$FTHG == premalldata$FTAG,1,0))
+premalldata$AwayTeamPoints = ifelse(premalldata$FTHG > premalldata$FTAG, 0,
+                                    ifelse(premalldata$FTHG == premalldata$FTAG,1,3))
+
+#GET RID OF UNNECCESSARY COLUMNS
+premalldata = premalldata[,c(1:6,24:26)]
+
+#REORDER COLUMNS
+premalldata = premalldata[,c(1,2,7,3,4,5,6,8,9)]
+
+#-------------------------------------------------------------------------------------------------
+#Bundesliga
+
+bund0910 = read.csv("input/Bundesliga/Bundesliga0910.csv")
+bund1011 = read.csv("input/Bundesliga/Bundesliga1011.csv")
+bund1112 = read.csv("input/Bundesliga/Bundesliga1112.csv")
+bund1213 = read.csv("input/Bundesliga/Bundesliga1213.csv")
+bund1314 = read.csv("input/Bundesliga/Bundesliga1314.csv")
+bund1415 = read.csv("input/Bundesliga/Bundesliga1415.csv")
+bund1516 = read.csv("input/Bundesliga/Bundesliga1516.csv")
+bund1617 = read.csv("input/Bundesliga/Bundesliga1617.csv")
+bund1718 = read.csv("input/Bundesliga/Bundesliga1718.csv")
+bund1819 = read.csv("input/Bundesliga/Bundesliga1819.csv")
+
+#think its the same data format as prem
+#View(bund0910)
+#View(bund1314)
+#View(bund1819)
+
+#CONDENSE DATAFRAMES TO SPECIFIC COLUMNS
+bund0910 = bund0910[,c(1:23)]
+bund1011 = bund1011[,c(1:23)]
+bund1112 = bund1112[,c(1:23)]
+bund1213 = bund1213[,c(1:23)]
+bund1314 = bund1314[,c(1:23)]
+bund1415 = bund1415[,c(1:23)]
+bund1516 = bund1516[,c(1:23)]
+bund1617 = bund1617[,c(1:23)]
+bund1718 = bund1718[,c(1:23)]
+bund1819 = bund1819[,c(1:23)]
+
+#MERGE ALL SEASON DATA TOGETHER
+bundalldata = do.call("rbind", list(bund0910, bund1011, bund1112, bund1213, bund1314, bund1415,
+                                    bund1516, bund1617, bund1718, bund1819))
+#View(bundalldata)
+
+#FIX DATE
+
+bundalldata$Date = parse_date_time(bundalldata$Date,orders = c("dmy","ymd"))
+
+#ADD SEASON
+bundalldata$season[1:306] = "09/10"
+bundalldata$season[307:612] = "10/11"
+bundalldata$season[613:918] = "11/12"
+bundalldata$season[919:1224] = "12/13"
+bundalldata$season[1225:1530] = "13/14"
+bundalldata$season[1531:1836] = "14/15"
+bundalldata$season[1837:2142] = "15/16"
+bundalldata$season[2143:2448] = "16/17"
+bundalldata$season[2449:2754] = "17/18"
+bundalldata$season[2755:3060] = "18/19"
+
+bundalldata$B365H = NULL
+
+#ADD POINTS
+bundalldata$HomeTeamPoints = ifelse(bundalldata$FTHG > bundalldata$FTAG, 3,
+                                    ifelse(bundalldata$FTHG == bundalldata$FTAG,1,0))
+bundalldata$AwayTeamPoints = ifelse(bundalldata$FTHG > bundalldata$FTAG, 0,
+                                    ifelse(bundalldata$FTHG == bundalldata$FTAG,1,3))
+
+#GET RID OF UNNECCESSARY COLUMNS
+bundalldata = bundalldata[,c(1:6,23:25)]
+
+#REORDER COLUMNS
+bundalldata = bundalldata[,c(1,2,7,3,4,5,6,8,9)]
+
+#-----------------------------------------------------------------------------------------------------
+
+#Serie A
+
+italy0910 = read.csv("input/Serie A/SerieA0910.csv")
+italy1011 = read.csv("input/Serie A/SerieA1011.csv")
+italy1112 = read.csv("input/Serie A/SerieA1112.csv")
+italy1213 = read.csv("input/Serie A/SerieA1213.csv")
+italy1314 = read.csv("input/Serie A/SerieA1314.csv")
+italy1415 = read.csv("input/Serie A/SerieA1415.csv")
+italy1516 = read.csv("input/Serie A/SerieA1516.csv")
+italy1617 = read.csv("input/Serie A/SerieA1617.csv")
+italy1718 = read.csv("input/Serie A/SerieA1718.csv")
+italy1819 = read.csv("input/Serie A/SerieA1819.csv")
+
+#View(italy0910)
+#View(italy1415)
+#View(italy1819)
+#again dates think are same as prem
+
+#CONDENSE DATAFRAMES TO SPECIFIC COLUMNS
+italy0910 = italy0910[,c(1:23)]
+italy1011 = italy1011[,c(1:23)]
+italy1112 = italy1112[,c(1:23)]
+italy1213 = italy1213[,c(1:23)]
+italy1314 = italy1314[,c(1:23)]
+italy1415 = italy1415[,c(1:23)]
+italy1516 = italy1516[,c(1:23)]
+italy1617 = italy1617[,c(1:23)]
+italy1718 = italy1718[,c(1:23)]
+italy1819 = italy1819[,c(1:23)]
+
+#MERGE ALL SEASON DATA TOGETHER
+italyalldata = do.call("rbind", list(italy0910, italy1011, italy1112, italy1213, italy1314, italy1415,
+                                     italy1516, italy1617, italy1718, italy1819))
+#View(italyalldata)
+
+italyalldata$B365H = NULL
+
+#FIX DATE
+
+italyalldata$Date = parse_date_time(italyalldata$Date,orders = c("dmy","ymd"))
+
+#ADD SEASON
+italyalldata$season[1:380] = "09/10"
+italyalldata$season[381:760] = "10/11"
+italyalldata$season[761:1140] = "11/12"
+italyalldata$season[1141:1520] = "12/13"
+italyalldata$season[1521:1900] = "13/14"
+italyalldata$season[1901:2280] = "14/15"
+italyalldata$season[2281:2660] = "15/16"
+italyalldata$season[2661:3040] = "16/17"
+italyalldata$season[3041:3420] = "17/18"
+italyalldata$season[3421:3800] = "18/19"
+
+#ADD POINTS
+italyalldata$HomeTeamPoints = ifelse(italyalldata$FTHG > italyalldata$FTAG, 3,
+                                     ifelse(italyalldata$FTHG == italyalldata$FTAG,1,0))
+italyalldata$AwayTeamPoints = ifelse(italyalldata$FTHG > italyalldata$FTAG, 0,
+                                     ifelse(italyalldata$FTHG == italyalldata$FTAG,1,3))
+
+#GET RID OF UNNECCESSARY COLUMNS
+italyalldata = italyalldata[,c(1:6,23:25)]
+
+#REORDER COLUMNS
+italyalldata = italyalldata[,c(1,2,7,3,4,5,6,8,9)]
+
+#--------------------------------------------------------------------------------------------------
+
+#La Liga
+
+laliga0910 = read.csv("input/La Liga/laliga0910.csv")
+laliga1011 = read.csv("input/La Liga/laliga1011.csv")
+laliga1112 = read.csv("input/La Liga/laliga1112.csv")
+laliga1213 = read.csv("input/La Liga/laliga1213.csv")
+laliga1314 = read.csv("input/La Liga/laliga1314.csv")
+laliga1415 = read.csv("input/La Liga/laliga1415.csv")
+laliga1516 = read.csv("input/La Liga/laliga1516.csv")
+laliga1617 = read.csv("input/La Liga/laliga1617.csv")
+laliga1718 = read.csv("input/La Liga/laliga1718.csv")
+laliga1819 = read.csv("input/La Liga/laliga1819.csv")
+
+#View(laliga0910)
+#View(laliga1415)
+#View(laliga1819)
+#again dates think are same as prem
+
+#CONDENSE DATAFRAMES TO SPECIFIC COLUMNS
+laliga0910 = laliga0910[,c(1:23)]
+laliga1011 = laliga1011[,c(1:23)]
+laliga1112 = laliga1112[,c(1:23)]
+laliga1213 = laliga1213[,c(1:23)]
+laliga1314 = laliga1314[,c(1:23)]
+laliga1415 = laliga1415[,c(1:23)]
+laliga1516 = laliga1516[,c(1:23)]
+laliga1617 = laliga1617[,c(1:23)]
+laliga1718 = laliga1718[,c(1:23)]
+laliga1819 = laliga1819[,c(1:23)]
+
+#MERGE ALL SEASON DATA TOGETHER
+laligaalldata = do.call("rbind", list(laliga0910, laliga1011, laliga1112, laliga1213, laliga1314, laliga1415,
+                                      laliga1516, laliga1617, laliga1718, laliga1819))
+#View(laligaalldata)
+
+laligaalldata$B365H = NULL
+
+#FIX DATE
+
+laligaalldata$Date = parse_date_time(laligaalldata$Date,orders = c("dmy","ymd"))
+
+#ADD SEASON
+laligaalldata$season[1:380] = "09/10"
+laligaalldata$season[381:760] = "10/11"
+laligaalldata$season[761:1140] = "11/12"
+laligaalldata$season[1141:1520] = "12/13"
+laligaalldata$season[1521:1900] = "13/14"
+laligaalldata$season[1901:2280] = "14/15"
+laligaalldata$season[2281:2660] = "15/16"
+laligaalldata$season[2661:3040] = "16/17"
+laligaalldata$season[3041:3420] = "17/18"
+laligaalldata$season[3421:3800] = "18/19"
+
+#ADD POINTS
+laligaalldata$HomeTeamPoints = ifelse(laligaalldata$FTHG > laligaalldata$FTAG, 3,
+                                      ifelse(laligaalldata$FTHG == laligaalldata$FTAG,1,0))
+laligaalldata$AwayTeamPoints = ifelse(laligaalldata$FTHG > laligaalldata$FTAG, 0,
+                                      ifelse(laligaalldata$FTHG == laligaalldata$FTAG,1,3))
+
+#GET RID OF UNNECCESSARY COLUMNS
+laligaalldata = laligaalldata[,c(1:6,23:25)]
+
+#REORDER COLUMNS
+laligaalldata = laligaalldata[,c(1,2,7,3,4,5,6,8,9)]
+
+#-------------------------------------------------------------------------------------------------------
+
+#Ligue 1
+
+french0910 = read.csv("input/Ligue 1/French0910.csv")
+french1011 = read.csv("input/Ligue 1/French1011.csv")
+french1112 = read.csv("input/Ligue 1/French1112.csv")
+french1213 = read.csv("input/Ligue 1/French1213.csv")
+french1314 = read.csv("input/Ligue 1/French1314.csv")
+french1415 = read.csv("input/Ligue 1/French1415.csv")
+french1516 = read.csv("input/Ligue 1/French1516.csv")
+french1617 = read.csv("input/Ligue 1/French1617.csv")
+french1718 = read.csv("input/Ligue 1/French1718.csv")
+french1819 = read.csv("input/Ligue 1/French1819.csv")
+
+#View(french0910)
+#View(french1415)
+#View(french1819)
+#again dates think are same as prem
+
+#CONDENSE DATAFRAMES TO SPECIFIC COLUMNS
+french0910 = french0910[,c(1:23)]
+french1011 = french1011[,c(1:23)]
+french1112 = french1112[,c(1:23)]
+french1213 = french1213[,c(1:23)]
+french1314 = french1314[,c(1:23)]
+french1415 = french1415[,c(1:23)]
+french1516 = french1516[,c(1:23)]
+french1617 = french1617[,c(1:23)]
+french1718 = french1718[,c(1:23)]
+french1819 = french1819[,c(1:23)]
+
+#MERGE ALL SEASON DATA TOGETHER
+frenchalldata = do.call("rbind", list(french0910, french1011, french1112, french1213, french1314, french1415,
+                                      french1516, french1617, french1718, french1819))
+#View(frenchalldata)
+
+frenchalldata$B365H = NULL
+
+#FIX DATE
+
+frenchalldata$Date = parse_date_time(frenchalldata$Date,orders = c("dmy","ymd"))
+
+#ADD SEASON
+frenchalldata$season[1:380] = "09/10"
+frenchalldata$season[381:760] = "10/11"
+frenchalldata$season[761:1140] = "11/12"
+frenchalldata$season[1141:1520] = "12/13"
+frenchalldata$season[1521:1900] = "13/14"
+frenchalldata$season[1901:2280] = "14/15"
+frenchalldata$season[2281:2660] = "15/16"
+frenchalldata$season[2661:3040] = "16/17"
+frenchalldata$season[3041:3420] = "17/18"
+frenchalldata$season[3421:3800] = "18/19"
+
+#ADD POINTS
+frenchalldata$HomeTeamPoints = ifelse(frenchalldata$FTHG > frenchalldata$FTAG, 3,
+                                      ifelse(frenchalldata$FTHG == frenchalldata$FTAG,1,0))
+frenchalldata$AwayTeamPoints = ifelse(frenchalldata$FTHG > frenchalldata$FTAG, 0,
+                                      ifelse(frenchalldata$FTHG == frenchalldata$FTAG,1,3))
+
+#GET RID OF UNNECCESSARY COLUMNS
+frenchalldata = frenchalldata[,c(1:6,23:25)]
+
+#REORDER COLUMNS
+frenchalldata = frenchalldata[,c(1,2,7,3,4,5,6,8,9)]
+```
+
+# Let's Start with the Premier League
+
+## Premier League Tables 09/10 - 18/19 {.tabset}
+
+```{r analysis PL, echo = FALSE, results='asis'}
+
+for(t in unique(premalldata$season)) {
+  cat("###", t,'\n') #open each tab and label it
+  plots <- 
+    premalldata%>%
+    filter(season == t)%>%
+    select(Team = HomeTeam,Points = HomeTeamPoints) %>%
+    bind_rows(premalldata%>%
+              filter(season == t)%>%
+              select(Team = AwayTeam,Points = AwayTeamPoints))%>%
+    group_by(Team)%>%
+    summarise(Points = sum(Points))%>%
+    arrange(desc(Points))
+  print(knitr::kable(plots))
+  cat('\n\n') #closse each tab
+    
+}
+
+
+```
+
+## Premier League Winner's & Top 4 09/10 - 18/19
+
+```{r PL Winners, echo=FALSE, comment=NA}
+
+premtable <- as.data.frame(sqldf("SELECT Team, sum(Points) as Points, season
+          FROM 
+          (SELECT HomeTeam as Team, sum(HomeTeamPoints) as Points, season FROM premalldata GROUP BY Team, season
+          UNION
+          SELECT AwayTeam as Team, sum(AwayTeamPoints) as Points, season FROM premalldata GROUP BY Team,season)
+      GROUP BY Team, season
+      ORDER BY season, Points desc"))
+
+premtable$Rank <-rep(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20),times=10)
+
+
+#Add the ranks to premalldata for home and awayteams
+
+premalldata <- sqldf("SELECT Div, Date, p1.season, HomeTeam, AwayTeam, FTHG, FTAG, HomeTeamPoints, AwayTeamPoints, p2.Rank as HomeRank, p3.Rank as AwayRank
+      FROM premalldata p1
+      LEFT JOIN premtable p2 ON p1.HomeTeam = p2.Team AND p1.season = p2.season
+      LEFT JOIN premtable p3 ON p1.AwayTeam = p3.Team AND p1.season = p3.season")
+
+#SQL
+prem_champs <- sqldf("SELECT Team as Champion, season
+      FROM premtable 
+      WHERE Rank = 1")
+
+print(prem_champs)
+
+premtop4 <- sqldf("SELECT Team, Count(*) as Top4Finishes
+      FROM premtable 
+      WHERE Rank BETWEEN 1 AND 4
+      GROUP BY Team
+      ORDER by Top4Finishes DESC")
+print(premtop4)
+
+```
+
+This is why people enjoy watching the PL. 10 seasons, no team was ever champion twice in a row during this time. However, in the context of the top 4, this is largely fought between 5 teams during this period. This may indicate more of a gap between the top 4-5 teams and the mid table sides.
+
+# Let's move on to the German Bundesliga
+
+## Bundesliga Tables 09/10 - 18/19 {.tabset}
+
+```{r analysis Bundes, echo = FALSE, results='asis'}
+
+for(t in unique(bundalldata$season)) {
+  cat("###", t,'\n') #open each tab and label it
+  plots <- 
+    bundalldata%>%
+    filter(season == t)%>%
+    select(Team = HomeTeam,Points = HomeTeamPoints) %>%
+    bind_rows(bundalldata%>%
+              filter(season == t)%>%
+              select(Team = AwayTeam,Points = AwayTeamPoints))%>%
+    group_by(Team)%>%
+    summarise(Points = sum(Points))%>%
+    arrange(desc(Points))
+  print(knitr::kable(plots))
+  cat('\n\n') #closse each tab
+    
+}
+
+```
+
+## Bundesliga Winner's & Top 4 09/10 - 18/19
+
+```{r Bundes Winners, echo=FALSE, comment = NA}
+
+bundtable <- as.data.frame(sqldf("SELECT Team, sum(Points) as Points, season
+          FROM 
+          (SELECT HomeTeam as Team, sum(HomeTeamPoints) as Points, season FROM bundalldata GROUP BY Team, season
+          UNION
+          SELECT AwayTeam as Team, sum(AwayTeamPoints) as Points, season FROM bundalldata GROUP BY Team,season)
+      GROUP BY Team, season
+      ORDER BY season, Points desc"))
+
+bundtable$Rank <-rep(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18),times=10)
+
+
+#Add the ranks to bundalldata for home and awayteams
+
+bundalldata <- sqldf("SELECT Div, Date, p1.season, HomeTeam, AwayTeam, FTHG, FTAG, HomeTeamPoints, AwayTeamPoints, p2.Rank as HomeRank, p3.Rank as AwayRank
+      FROM bundalldata p1
+      LEFT JOIN bundtable p2 ON p1.HomeTeam = p2.Team AND p1.season = p2.season
+      LEFT JOIN bundtable p3 ON p1.AwayTeam = p3.Team AND p1.season = p3.season")
+
+#SQL
+bund_champs <- sqldf("SELECT Team as Champion, season
+      FROM bundtable 
+      WHERE Rank = 1")
+
+print(bund_champs)
+
+bundtop4 <- sqldf("SELECT Team, Count(*) as Top4Finishes
+      FROM bundtable 
+      WHERE Rank BETWEEN 1 AND 4
+      GROUP BY Team
+      ORDER by Top4Finishes DESC")
+print(bundtop4)
+
+```
+
+This is why the Bundesliga comes under much scrutiny. Bayern Munich dominates this league and was champions 8/10 times during this period. The top 4 is a bit more interesting though. You see a few more teams getting into these positions than the premier league, identifying that after Bayern, there is a bit more balance to the 2nd through mid table positions. 
+
+
+# Italian Serie A
+
+## Serie A Tables 09/10 - 18/19 {.tabset}
+
+```{r analysis Serie A, echo = FALSE, results='asis'}
+
+for(t in unique(italyalldata$season)) {
+  cat("###", t,'\n') #open each tab and label it
+  plots <- 
+    italyalldata%>%
+    filter(season == t)%>%
+    select(Team = HomeTeam,Points = HomeTeamPoints) %>%
+    bind_rows(italyalldata%>%
+              filter(season == t)%>%
+              select(Team = AwayTeam,Points = AwayTeamPoints))%>%
+    group_by(Team)%>%
+    summarise(Points = sum(Points))%>%
+    arrange(desc(Points))
+  print(knitr::kable(plots))
+  cat('\n\n') #closse each tab
+    
+}
+
+```
+
+## Serie A Winner's & Top 4 09/10 - 18/19
+
+```{r Winners Serie A, echo=FALSE, comment = NA}
+
+italytable <- as.data.frame(sqldf("SELECT Team, sum(Points) as Points, season
+          FROM 
+          (SELECT HomeTeam as Team, sum(HomeTeamPoints) as Points, season FROM italyalldata GROUP BY Team, season
+          UNION
+          SELECT AwayTeam as Team, sum(AwayTeamPoints) as Points, season FROM italyalldata GROUP BY Team,season)
+      GROUP BY Team, season
+      ORDER BY season, Points desc"))
+
+italytable$Rank <-rep(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20),times=10)
+
+
+#Add the ranks to italyalldata for home and awayteams
+
+italyalldata <- sqldf("SELECT Div, Date, p1.season, HomeTeam, AwayTeam, FTHG, FTAG, HomeTeamPoints, AwayTeamPoints, p2.Rank as HomeRank, p3.Rank as AwayRank
+      FROM italyalldata p1
+      LEFT JOIN italytable p2 ON p1.HomeTeam = p2.Team AND p1.season = p2.season
+      LEFT JOIN italytable p3 ON p1.AwayTeam = p3.Team AND p1.season = p3.season")
+
+#SQL
+italy_champs <- sqldf("SELECT Team as Champion, season
+      FROM italytable 
+      WHERE Rank = 1")
+
+print(italy_champs)
+
+italytop4 <- sqldf("SELECT Team, Count(*) as Top4Finishes
+      FROM italytable 
+      WHERE Rank BETWEEN 1 AND 4
+      GROUP BY Team
+      ORDER by Top4Finishes DESC")
+print(italytop4)
+
+```
+
+The Serie A followed a similar pattern to the Bundesliga during this period. Juventus were champions 8/10 times, 8 times in a row actually. Fans outside of Juventus (and Bayern) do not want to see this. They want to watch competition, new winners - it's more interesting. Thankfully the top 4 battle gives that interest. Again, similar to the Bundesliga we see many more teams than the PL winning these positions during this time, indicating that the gap from 2nd to mid table is often quite competitive. I would say there's even a bit more balance here than the Bundesliga.  
+
+# Spain's La Liga
+
+## La Liga Tables 09/10 - 18/19 {.tabset}
+
+```{r analysis La Liga, echo = FALSE, results='asis'}
+
+for(t in unique(laligaalldata$season)) {
+  cat("###", t,'\n') #open each tab and label it
+  plots <- 
+    laligaalldata%>%
+    filter(season == t)%>%
+    select(Team = HomeTeam,Points = HomeTeamPoints) %>%
+    bind_rows(laligaalldata%>%
+              filter(season == t)%>%
+              select(Team = AwayTeam,Points = AwayTeamPoints))%>%
+    group_by(Team)%>%
+    summarise(Points = sum(Points))%>%
+    arrange(desc(Points))
+  print(knitr::kable(plots))
+  cat('\n\n') #closse each tab
+    
+}
+
+```
+
+## La Liga Winner's & Top 4 09/10 - 18/19
+
+```{r Winners La Liga, echo=FALSE, comment=NA}
+
+laligatable <- as.data.frame(sqldf("SELECT Team, sum(Points) as Points, season
+          FROM 
+          (SELECT HomeTeam as Team, sum(HomeTeamPoints) as Points, season FROM laligaalldata GROUP BY Team, season
+          UNION
+          SELECT AwayTeam as Team, sum(AwayTeamPoints) as Points, season FROM laligaalldata GROUP BY Team,season)
+      GROUP BY Team, season
+      ORDER BY season, Points desc"))
+
+laligatable$Rank <-rep(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20),times=10)
+
+
+#Add the ranks to laligaalldata for home and awayteams
+
+laligaalldata <- sqldf("SELECT Div, Date, p1.season, HomeTeam, AwayTeam, FTHG, FTAG, HomeTeamPoints, AwayTeamPoints, p2.Rank as HomeRank, p3.Rank as AwayRank
+      FROM laligaalldata p1
+      LEFT JOIN laligatable p2 ON p1.HomeTeam = p2.Team AND p1.season = p2.season
+      LEFT JOIN laligatable p3 ON p1.AwayTeam = p3.Team AND p1.season = p3.season")
+
+#SQL
+laliga_champs <- sqldf("SELECT Team as Champion, season
+      FROM laligatable 
+      WHERE Rank = 1")
+
+print(laliga_champs)
+
+laligatop4 <- sqldf("SELECT Team, Count(*) as Top4Finishes
+      FROM laligatable 
+      WHERE Rank BETWEEN 1 AND 4
+      GROUP BY Team
+      ORDER by Top4Finishes DESC")
+print(laligatop4)
+
+```
+
+Ah La Liga. During this period, it was the peak of European Football. Real Madrid vs Barcelona - Ronaldo vs Messi - were the most anticipated games on the calendar (arguably they still are). But as many other domestic league fanbases point out, it is a league largely dominated by 2 with no room for the rest. We see Barca and RM winning 9/10 titles during this time, the top 4 is dominated by 4 teams over this period as well. Once Messi and Ronaldo left, the hype died down quite a bit and many eyes have turned from La Liga to PL as it's deemed a more competitve and watchable league. 
+
+# France's Ligue 1
+
+## Ligue 1 Tables 09/10 - 18/19 {.tabset}
+
+```{r analysis Ligue 1, echo = FALSE, results='asis'}
+
+for(t in unique(frenchalldata$season)) {
+  cat("###", t,'\n') #open each tab and label it
+  plots <- 
+    frenchalldata%>%
+    filter(season == t)%>%
+    select(Team = HomeTeam,Points = HomeTeamPoints) %>%
+    bind_rows(frenchalldata%>%
+              filter(season == t)%>%
+              select(Team = AwayTeam,Points = AwayTeamPoints))%>%
+    group_by(Team)%>%
+    summarise(Points = sum(Points))%>%
+    arrange(desc(Points))
+  print(knitr::kable(plots))
+  cat('\n\n') #closse each tab
+    
+}
+
+```
+
+## Ligue 1 Winner's & Top 4 09/10 - 18/19
+
+```{r Winners Ligue 1, echo=FALSE,comment=NA}
+
+frenchtable <- as.data.frame(sqldf("SELECT Team, sum(Points) as Points, season
+          FROM 
+          (SELECT HomeTeam as Team, sum(HomeTeamPoints) as Points, season FROM frenchalldata GROUP BY Team, season
+          UNION
+          SELECT AwayTeam as Team, sum(AwayTeamPoints) as Points, season FROM frenchalldata GROUP BY Team,season)
+      GROUP BY Team, season
+      ORDER BY season, Points desc"))
+
+frenchtable$Rank <-rep(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20),times=10)
+
+
+#Add the ranks to frenchalldata for home and awayteams
+
+frenchalldata <- sqldf("SELECT Div, Date, p1.season, HomeTeam, AwayTeam, FTHG, FTAG, HomeTeamPoints, AwayTeamPoints, p2.Rank as HomeRank, p3.Rank as AwayRank
+      FROM frenchalldata p1
+      LEFT JOIN frenchtable p2 ON p1.HomeTeam = p2.Team AND p1.season = p2.season
+      LEFT JOIN frenchtable p3 ON p1.AwayTeam = p3.Team AND p1.season = p3.season")
+
+#SQL
+french_champs <- sqldf("SELECT Team as Champion, season
+      FROM frenchtable 
+      WHERE Rank = 1")
+
+print(french_champs)
+
+frenchtop4 <- sqldf("SELECT Team, Count(*) as Top4Finishes
+      FROM frenchtable 
+      WHERE Rank BETWEEN 1 AND 4
+      GROUP BY Team
+      ORDER by Top4Finishes DESC")
+print(frenchtop4)
+
+```
+
+Ligue 1 is difficult to make sense of during this period. From the data we see 6 different champions in 10 seasons, the most of any of the top 5 leagues. We see a top 4 largely contested by 5 teams, but others tend to sneak in as well some years. So why is this league so largely criticized? PSG were bought in 2011 and you can see starting from the 12/13 season, they won 6/7 seasons (15/16 should be PSG, not Lyon). Often they win by large margins too. People don't see the league as competitive anymore due to their dominance. We will explore a bit in the next section how competitive the league as a whole is. 
+
+# Points Earned from the Bottom 6 Teams vs Top 6 Teams per Season
+
+This is such a random measure I thought to look into to compare competitiveness in each league. I often here from commentary that anyone can beat anyone on any given day in England and that's why their league is the best in the world. Apparently these results do not happen anywhere else? Let's take a look. 
+
+```{r, Points Earned Bottom 6 vs Top 6, echo=FALSE, results='asis'}
+
+prembottom6 <- sqldf("SELECT season, sum(CASE 
+      WHEN HomeRank BETWEEN 1 and 6 and AwayRank BETWEEN 15 and 20 THEN AwayTeamPoints
+      WHEN HomeRank BETWEEN 15 and 20 and AwayRank BETWEEN 1 and 6 THEN HomeTeamPoints END) AS PremBottom6Points
+      FROM premalldata
+      GROUP BY season")
+
+bundbottom6 <- sqldf("SELECT season, sum(CASE 
+      WHEN HomeRank BETWEEN 1 and 6 and AwayRank BETWEEN 15 and 20 THEN AwayTeamPoints
+      WHEN HomeRank BETWEEN 15 and 20 and AwayRank BETWEEN 1 and 6 THEN HomeTeamPoints END) AS BundBottom6Points
+      FROM bundalldata
+      GROUP BY season")
+
+italybottom6 <-  sqldf("SELECT season, sum(CASE 
+      WHEN HomeRank BETWEEN 1 and 6 and AwayRank BETWEEN 15 and 20 THEN AwayTeamPoints
+      WHEN HomeRank BETWEEN 15 and 20 and AwayRank BETWEEN 1 and 6 THEN HomeTeamPoints END) AS ItalyBottom6Points
+      FROM italyalldata
+      GROUP BY season")
+
+laligabottom6 <- sqldf("SELECT season, sum(CASE 
+      WHEN HomeRank BETWEEN 1 and 6 and AwayRank BETWEEN 15 and 20 THEN AwayTeamPoints
+      WHEN HomeRank BETWEEN 15 and 20 and AwayRank BETWEEN 1 and 6 THEN HomeTeamPoints END) AS LaLigaBottom6Points
+      FROM laligaalldata
+      GROUP BY season")
+
+frenchbottom6 <-  sqldf("SELECT season, sum(CASE 
+      WHEN HomeRank BETWEEN 1 and 6 and AwayRank BETWEEN 15 and 20 THEN AwayTeamPoints
+      WHEN HomeRank BETWEEN 15 and 20 and AwayRank BETWEEN 1 and 6 THEN HomeTeamPoints END) AS FrenchBottom6Points
+      FROM frenchalldata
+      GROUP BY season")
+
+bottom6 <- prembottom6%>%
+  left_join(bundbottom6, by = "season")%>%
+  left_join(italybottom6, by = "season")%>%
+  left_join(laligabottom6, by = "season")%>%
+  left_join(frenchbottom6, by = "season")
+
+
+bottom6 <-  bottom6%>%
+  pivot_longer(!season, names_to = "League",
+               values_to = "Points")
+
+ggplot(bottom6)+
+  geom_line(aes(x = season, y = Points, group = League, color = League))+
+  geom_point(aes(x = season, y = Points, group = League, color = League))+
+  ggtitle("Points Earned per Season from Bottom 6 Teams vs \n Top 6 Teams 09/10 - 18/19")
+
+
+
+```
+
+So what does this tell us? Well, that there isn't much in it.
+
+You might notice the bundesliga on multiple occasions is at the bottom of these rankings and never at the top.
+
+You might notice the french league is on top on multiple occasions and never at the bottom. (15/16 needs to be cautious as for some reason that I cannot figure out, PSG is not appearing as the top team in 15/16 in some calculations so this number is inflated. My guess would be between 12-24 points which would still make it pretty high)
+
+And then you have the Prem, Italian Serie A and Spanish La Liga all hovering in the middle each having a couple occasions where they're on top and a couple occasions where theyr'e on the bottom
+
+Meaning what? Well that soccer is a sport. None of these top sides completely obliterate the bottom sides year after year, nor lose more often to bottom sides year after year. 
+
+The media frenzy that anyone can beat anyone on any given day in the premier league is probably true. But no more true that any of the other leagues. You just hear about a result more in the premier league because it has the most global media attention and marketing
+
+
